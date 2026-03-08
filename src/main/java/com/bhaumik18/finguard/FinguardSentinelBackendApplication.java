@@ -1,0 +1,13 @@
+package com.bhaumik18.finguard;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class FinguardSentinelBackendApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(FinguardSentinelBackendApplication.class, args);
+	}
+
+}
