@@ -1,5 +1,7 @@
 package com.bhaumik18.finguard.transaction.entity;
 
-public class TransactionType {
-
+public enum TransactionType {
+	CREDIT,
+	DEBIT,
+	TRANSFER
 }
