@@ -68,7 +68,7 @@ public class Transaction {
 	
 	@LastModifiedDate
 	@Column(name = "updated_at", nullable = false)
-	private Instant updateAt;
+	private Instant updatedAt;
 	
 	@Version
 	private Integer version;
