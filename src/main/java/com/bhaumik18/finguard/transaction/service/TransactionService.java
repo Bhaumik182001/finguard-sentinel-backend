@@ -2,6 +2,9 @@ package com.bhaumik18.finguard.transaction.service;
 
 import java.math.BigDecimal;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +13,7 @@ import com.bhaumik18.finguard.transaction.dto.TransactionResponse;
 import com.bhaumik18.finguard.transaction.entity.Transaction;
 import com.bhaumik18.finguard.transaction.mapper.TransactionMapper;
 import com.bhaumik18.finguard.transaction.repository.TransactionRepository;
+import com.bhaumik18.finguard.transaction.repository.TransactionSpecification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +37,7 @@ public class TransactionService {
         log.info("Initiating transaction from {} to {} for amount {}", 
                  request.sourceAccountId(), request.destinationAccountId(), request.amount());
 
-     // 1. Execute Business Rule Validations
+        // 1. Execute Business Rule Validations
         if (request.sourceAccountId().equalsIgnoreCase(request.destinationAccountId())) {
             log.warn("Transaction failed: Source and destination accounts are identical ({})", request.sourceAccountId());
             throw new IllegalArgumentException("Source and destination accounts cannot be the same.");
@@ -45,7 +49,7 @@ public class TransactionService {
         }
         
         
-     // 2. Map DTO to Entity
+        // 2. Map DTO to Entity
         Transaction transaction = transactionMapper.toEntity(request);
 
         // 3. Generate secure Transaction Reference & Set Initial State
@@ -64,5 +68,18 @@ public class TransactionService {
         log.info("Transaction {} successfully created with internal ID: {}", 
                  savedTransaction.getTransactionReference(), savedTransaction.getId());
                  
-        return transactionMapper.toResponse(savedTransaction);    }
+        return transactionMapper.toResponse(savedTransaction);    
+    }
+    
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getTransactions(String accountId, String status, Pageable pageable) {
+        log.info("Fetching transactions with filters - Account: {}, Status: {}", accountId, status);
+        
+        Specification<Transaction> spec = Specification
+            .where(TransactionSpecification.involvesAccount(accountId))
+            .and(TransactionSpecification.hasStatus(status));
+
+        return transactionRepository.findAll(spec, pageable)
+                .map(transactionMapper::toResponse);
+    }
 }
