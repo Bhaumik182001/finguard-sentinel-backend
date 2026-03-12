@@ -17,7 +17,7 @@ import com.bhaumik18.finguard.transaction.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 
 
-@Configuration
+//@Configuration
 @RequiredArgsConstructor
 public class DatabaseSeeder {
 	
