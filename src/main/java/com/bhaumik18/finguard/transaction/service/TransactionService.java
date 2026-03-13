@@ -2,6 +2,7 @@ package com.bhaumik18.finguard.transaction.service;
 
 import java.math.BigDecimal;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,6 +16,7 @@ import com.bhaumik18.finguard.exception.BusinessRuleException;
 import com.bhaumik18.finguard.transaction.dto.TransactionRequest;
 import com.bhaumik18.finguard.transaction.dto.TransactionResponse;
 import com.bhaumik18.finguard.transaction.entity.Transaction;
+import com.bhaumik18.finguard.transaction.event.TransactionCompletedEvent;
 import com.bhaumik18.finguard.transaction.mapper.TransactionMapper;
 import com.bhaumik18.finguard.transaction.repository.TransactionRepository;
 import com.bhaumik18.finguard.transaction.repository.TransactionSpecification;
@@ -30,6 +32,7 @@ public class TransactionService {
 	private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Processes a new financial transaction.
@@ -90,7 +93,13 @@ public class TransactionService {
         // 4. Save to Database
         log.info("Persisting transaction reference: {}", transaction.getTransactionReference());
         Transaction savedTransaction = transactionRepository.save(transaction);
-
+        
+        eventPublisher.publishEvent(new TransactionCompletedEvent(
+        		savedTransaction.getTransactionReference(),
+        		authenticatedUserEmail,
+        		savedTransaction.getAmount()
+        ));
+        
         // 5. Map Entity back to Response DTO
         log.info("Transaction {} successfully created with internal ID: {}", 
                  savedTransaction.getTransactionReference(), savedTransaction.getId());
