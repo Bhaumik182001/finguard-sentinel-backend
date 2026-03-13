@@ -9,10 +9,14 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.bhaumik18.finguard.security.filter.JwtAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -30,7 +34,8 @@ public class SecurityConfig {
 	
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf(AbstractHttpConfigurer::disable)
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+		.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
 					.requestMatchers(SWAGGER_WHITELIST).permitAll()
@@ -42,4 +47,30 @@ public class SecurityConfig {
 		
 		return http.build();
 	}
+	
+	@Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Whitelist React (3000), Vue/Vite (5173), and typical Next.js (3000) ports
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000", 
+                "http://localhost:5173"
+        ));
+        
+        // Allow standard HTTP methods
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // Essential: Allow the JWT Authorization header and standard JSON content type
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        
+        // Required if your frontend needs to pass cookies or specific auth credentials
+        configuration.setAllowCredentials(true);
+
+        // Apply these rules to every single endpoint in our API
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
+        return source;
+    }
 }
