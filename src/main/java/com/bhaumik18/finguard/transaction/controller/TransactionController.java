@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,10 +36,10 @@ public class TransactionController {
      * @return 201 Created with the transaction response
      */
     @PostMapping
-    public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody TransactionRequest request) {
+    public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody TransactionRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         log.info("Received request to create transaction for amount: {}", request.amount());
         
-        TransactionResponse response = transactionService.processTransaction(request);
+        TransactionResponse response = transactionService.processTransaction(request, userDetails.getUsername());
         
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

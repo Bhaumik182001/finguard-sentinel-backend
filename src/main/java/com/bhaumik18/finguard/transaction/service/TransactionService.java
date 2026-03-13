@@ -5,9 +5,13 @@ import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bhaumik18.finguard.account.Account;
+import com.bhaumik18.finguard.account.repository.AccountRepository;
+import com.bhaumik18.finguard.exception.BusinessRuleException;
 import com.bhaumik18.finguard.transaction.dto.TransactionRequest;
 import com.bhaumik18.finguard.transaction.dto.TransactionResponse;
 import com.bhaumik18.finguard.transaction.entity.Transaction;
@@ -22,7 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
-
+	
+	private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
 
@@ -32,7 +37,7 @@ public class TransactionService {
      * @return TransactionResponse containing the generated ID and status
      */
     @Transactional
-    public TransactionResponse processTransaction(TransactionRequest request) {
+    public TransactionResponse processTransaction(TransactionRequest request, String authenticatedUserEmail) {
         
         log.info("Initiating transaction from {} to {} for amount {}", 
                  request.sourceAccountId(), request.destinationAccountId(), request.amount());
@@ -48,7 +53,29 @@ public class TransactionService {
             throw new IllegalArgumentException("Transaction amount must be strictly greater than zero.");
         }
         
+        Account sourceAccount = accountRepository.findByAccountNumber(request.sourceAccountId())
+                .orElseThrow(() -> new BusinessRuleException("Source account not found: " + request.sourceAccountId()));
+       
+        Account destAccount = accountRepository.findByAccountNumber(request.destinationAccountId())
+        		.orElseThrow(() -> new BusinessRuleException("Destination account not found " + request.destinationAccountId()));
         
+        
+       if(!sourceAccount.getUser().getEmail().equals(authenticatedUserEmail)) {
+    	   log.warn("Unauthorized transfer attempt by {} on account {}", authenticatedUserEmail, request.sourceAccountId());
+           throw new AccessDeniedException("You are not authorized to transfer funds from this account.");
+       }
+       
+       if (sourceAccount.getBalance().compareTo(request.amount()) < 0) {
+           log.warn("Transaction failed: Insufficient funds in {}", request.sourceAccountId());
+           throw new BusinessRuleException("Insufficient funds in account: " + request.sourceAccountId());
+       }
+       
+       sourceAccount.setBalance(sourceAccount.getBalance().subtract(request.amount()));
+       destAccount.setBalance(destAccount.getBalance().add(request.amount()));
+
+       accountRepository.save(sourceAccount);
+       accountRepository.save(destAccount);
+       
         // 2. Map DTO to Entity
         Transaction transaction = transactionMapper.toEntity(request);
 

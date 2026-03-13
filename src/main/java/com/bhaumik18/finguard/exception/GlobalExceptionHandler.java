@@ -2,7 +2,7 @@ package com.bhaumik18.finguard.exception;
 
 import java.net.URI;
 import java.time.Instant;
-
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,6 +26,24 @@ public class GlobalExceptionHandler {
 				.stream().map(error -> error.getField() + ": " + error.getDefaultMessage());
 		
 		problemDetail.setProperty("errors", errors);
+		return problemDetail;
+	}
+	
+	@ExceptionHandler(BusinessRuleException.class)
+	public ProblemDetail handleBusinessRuleException(BusinessRuleException ex) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+		problemDetail.setTitle("Business Rule Violation");
+		problemDetail.setType(URI.create("https://finguard.com/errors/business-rule-violation"));
+		problemDetail.setProperty("timestamp", Instant.now());
+		return problemDetail;
+	}
+	
+	@ExceptionHandler(AccessDeniedException.class)
+	public ProblemDetail handleAccessDeniedException(AccessDeniedException ex) {
+		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+		problemDetail.setTitle("Access Denied");
+		problemDetail.setType(URI.create("https://finguard.com/errors/access-denied"));
+		problemDetail.setProperty("timestamp", Instant.now());
 		return problemDetail;
 	}
 	

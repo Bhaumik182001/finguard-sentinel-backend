@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bhaumik18.finguard.security.dto.AuthenticationRequest;
 import com.bhaumik18.finguard.security.dto.AuthenticationResponse;
 import com.bhaumik18.finguard.security.dto.RegisterRequest;
 import com.bhaumik18.finguard.security.service.AuthenticationService;
@@ -21,5 +22,10 @@ public class AuthenticationController {
 	@PostMapping("/register")
 	public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request){
 		return ResponseEntity.ok(service.register(request));
+	}
+	
+	@PostMapping("/login")
+	public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request){
+		return ResponseEntity.ok(service.authenticate(request));
 	}
 }
