@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: finguard-db
+    environment:
+      POSTGRES_USER: finguard_admin
+      POSTGRES_PASSWORD: enterprise_password
+      POSTGRES_DB: finguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: . # Tells Docker to look for the Dockerfile in this directory
+    container_name: finguard-backend
+    ports:
+      - "8080:8080" # Maps your Windows port 8080 to the container's 8080
+    depends_on:
+      - postgres # Ensures the database starts before the backend
+    environment:
+      # Override the properties file to use the internal Docker network
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/finguard
+      - JWT_SECRET_KEY=VGhpc0lzQUR1bW15U2VjcmV0S2V5Rm9yVGVzdGluZ1B1cnBvc2VzT25seQ==
+
+volumes:
+  postgres_data:
