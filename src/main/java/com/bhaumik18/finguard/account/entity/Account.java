@@ -1,6 +1,8 @@
-package com.bhaumik18.finguard.account;
+package com.bhaumik18.finguard.account.entity;
 
 import com.bhaumik18.finguard.user.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,5 +34,6 @@ public class Account {
     // Many accounts (Savings, Checking) can belong to One User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 }

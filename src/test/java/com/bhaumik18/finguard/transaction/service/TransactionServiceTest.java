@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 
-import com.bhaumik18.finguard.account.Account;
+import com.bhaumik18.finguard.account.entity.Account;
 import com.bhaumik18.finguard.account.repository.AccountRepository;
 import com.bhaumik18.finguard.exception.BusinessRuleException;
 import com.bhaumik18.finguard.transaction.dto.TransactionRequest;

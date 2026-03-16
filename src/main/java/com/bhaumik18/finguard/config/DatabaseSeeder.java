@@ -1,6 +1,6 @@
 package com.bhaumik18.finguard.config; // Adjust to your actual package
 
-import com.bhaumik18.finguard.account.Account;
+import com.bhaumik18.finguard.account.entity.Account;
 import com.bhaumik18.finguard.account.repository.AccountRepository;
 import com.bhaumik18.finguard.user.Role;
 import com.bhaumik18.finguard.user.User;
