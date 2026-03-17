@@ -1,6 +1,7 @@
 package com.bhaumik18.finguard.transaction.service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -108,14 +109,25 @@ public class TransactionService {
     }
     
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> getTransactions(String accountId, String status, Pageable pageable) {
-        log.info("Fetching transactions with filters - Account: {}, Status: {}", accountId, status);
+    public Page<TransactionResponse> getTransactions(String authenticatedUserEmail, Pageable pageable) {
+        log.info("Fetching unified transaction history securely for user: {}", authenticatedUserEmail);
         
-        Specification<Transaction> spec = Specification
-            .where(TransactionSpecification.involvesAccount(accountId))
-            .and(TransactionSpecification.hasStatus(status));
+        // 1. Fetch all accounts owned by the logged-in user
+        List<Account> userAccounts = accountRepository.findAllByUser_Email(authenticatedUserEmail);
+        
+        // 2. Extract just the account numbers (e.g., "CHK-123", "SAV-456")
+        List<String> accountNumbers = userAccounts.stream()
+                .map(Account::getAccountNumber)
+                .toList();
 
-        return transactionRepository.findAll(spec, pageable)
+        // 3. If they have no accounts, return an empty page (avoids DB errors)
+        if (accountNumbers.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 4. Fetch transactions where their accounts are either the source OR destination
+        return transactionRepository.findBySourceAccountIdInOrDestinationAccountIdIn(
+                accountNumbers, accountNumbers, pageable)
                 .map(transactionMapper::toResponse);
     }
 }
