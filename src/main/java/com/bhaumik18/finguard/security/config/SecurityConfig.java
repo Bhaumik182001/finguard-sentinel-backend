@@ -59,7 +59,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000", 
                 "http://localhost:5173",
-                "https://finguard-api.duckdns.org" // It is good practice to include the API's own domain too
+                "https://finguard-api.duckdns.org",
+                "https://finguard-ui.vercel.app"
         ));
         
         // Allow standard HTTP methods
