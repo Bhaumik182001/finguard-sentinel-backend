@@ -2,6 +2,7 @@ package com.bhaumik18.finguard.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod; // Added this import
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,11 +36,13 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-		.csrf(AbstractHttpConfigurer::disable)
+		    .csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
 					.requestMatchers(SWAGGER_WHITELIST).permitAll()
 					.requestMatchers("/api/v1/auth/**").permitAll()
+                    // NEW FIX: Explicitly allow all pre-flight OPTIONS requests
+					.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
 					.anyRequest().authenticated()
 			)
 			.authenticationProvider(authenticationProvider)
@@ -55,14 +58,15 @@ public class SecurityConfig {
         // Whitelist React (3000), Vue/Vite (5173), and typical Next.js (3000) ports
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000", 
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "https://finguard-api.duckdns.org" // It is good practice to include the API's own domain too
         ));
         
         // Allow standard HTTP methods
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
-        // Essential: Allow the JWT Authorization header and standard JSON content type
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // NEW FIX: Allow all headers so Axios doesn't trigger a rejection
+        configuration.setAllowedHeaders(List.of("*"));
         
         // Required if your frontend needs to pass cookies or specific auth credentials
         configuration.setAllowCredentials(true);
